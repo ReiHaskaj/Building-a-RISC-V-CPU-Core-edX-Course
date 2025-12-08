@@ -14,7 +14,11 @@
    $reset = *reset;
    
    
-   $out[7:0] = $in1[6:0] + $in2[6:0];
+$out[7:0] = $in1[6:0] + $in2[6:0]; //Add
+$out[7:0] = $in1[6:0] - $in2[6:0]; //Subtract
+$out[7:0] = $in1[6:0] * $in2[6:0]; //Product
+$out[7:0] = $in1[6:0] / $in2[6:0]; //Divide
+
    
    
    
