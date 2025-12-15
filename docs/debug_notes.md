@@ -1,7 +1,6 @@
 # Debug Notes – RISC-V CPU (TL-Verilog)
 
-This document records concrete debugging issues encountered during development
-and how they were resolved, based on simulation behavior and Verilator output.
+This document records concrete debugging issues encountered during development and how they were resolved, based on simulation behavior, VIZ, and Verilator output.
 
 ---
 
@@ -11,8 +10,8 @@ and how they were resolved, based on simulation behavior and Verilator output.
 JAL instructions were incorrectly writing a return address into register x0.
 
 This caused:
-- x0 no longer remaining constant zero
-- Simulation failure despite correct program flow
+- x0 no longer remains constant at zero.
+- Simulation failure despite correct program flow.
 
 ### Root Cause
 The register file macro allows writes whenever `wr_en` is asserted.
