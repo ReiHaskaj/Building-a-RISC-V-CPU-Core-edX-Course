@@ -13,11 +13,8 @@
    
    $reset = *reset;
 
-
    // Program Counter
-   //$pc[1:0] = 2'b00; //lower 2 bits of the pc variable should be 0.
-   $pc[31:0] = >>1$next_pc[31:0];
-   //$next_pc[31:0] = $reset ? 0 : {$pc[31:2],2'b00} + 32'd4; //Program counter. Right now a simple counter. Used to fetch instruction from Instruction Memory.
+   $pc[31:0] = >>1$next_pc[31:0]; 
    
    $next_pc[31:0] = $reset ? 32'b0 :
                     $taken_br ? $br_tgt_pc :
@@ -50,10 +47,10 @@
    //Determine when the fields are valid:
    $rs2_valid = $is_r_instr || $is_s_instr || $is_b_instr;
    $rs1_valid = $is_r_instr || $is_i_instr || $is_s_instr || $is_b_instr;
-   $rd_valid = $is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr; //was like this
+   $rd_valid = $is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr; 
    
-   //$rd_valid = $rd[4:0] == 5'b00000 ? 1'b0 : //new. Prevents from doing anything on register x0. Causes a problem in my simulation for JAL!
-               //$is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr; //new: || $is_load.
+   //$rd_valid = $rd[4:0] == 5'b00000 ? 1'b0 : // New. Prevents from doing anything on register x0. Causes a problem in VIZ for JAL! For more information, please check the debug_notes.md
+               //$is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr;
    
    $imm_valid = $is_i_instr || $is_s_instr || $is_b_instr || $is_u_instr || $is_j_instr;
    
@@ -73,56 +70,51 @@
    
    $dec_bits[10:0] = {$instr[30],$funct3,$opcode};
    
-   $is_beq = $dec_bits ==? 11'bx_000_1100011; //check if the instruction is BEQ.
-   $is_bne = $dec_bits ==? 11'bx_001_1100011; //check if the instruction is BNE.
-   $is_blt = $dec_bits ==? 11'bx_100_1100011; //check if the instruction is BLT.
-   $is_bge = $dec_bits ==? 11'bx_101_1100011; //check if the instruction is BGE.
-   $is_bltu = $dec_bits ==? 11'bx_110_1100011; //check if the instruction is BLTU.
-   $is_bgeu = $dec_bits ==? 11'bx_111_1100011; //check if the instruction is BGEU.
+   $is_beq = $dec_bits ==? 11'bx_000_1100011; // Check if the instruction is BEQ.
+   $is_bne = $dec_bits ==? 11'bx_001_1100011; // Check if the instruction is BNE.
+   $is_blt = $dec_bits ==? 11'bx_100_1100011; // Check if the instruction is BLT.
+   $is_bge = $dec_bits ==? 11'bx_101_1100011; // Check if the instruction is BGE.
+   $is_bltu = $dec_bits ==? 11'bx_110_1100011; // Check if the instruction is BLTU.
+   $is_bgeu = $dec_bits ==? 11'bx_111_1100011; // Check if the instruction is BGEU.
    
-   $is_addi = $dec_bits ==? 11'bx_000_0010011; //check if the instruction is ADDI.
+   $is_addi = $dec_bits ==? 11'bx_000_0010011; // Check if the instruction is ADDI.
    
-   $is_add = $dec_bits == 11'b0_000_0110011; //check if the instruction is ADD.
+   $is_add = $dec_bits == 11'b0_000_0110011; // Check if the instruction is ADD.
    
-   //The remaining Instructions:
-   $is_lui = $dec_bits ==? 11'bx_xxx_0110111; //check if the instruction is LUI.
-   $is_auipc = $dec_bits ==? 11'bx_xxx_0010111; //check if the instruction is AUIPC.
-   $is_jal = $dec_bits ==? 11'bx_xxx_1101111; //check if the instruction is JAL.
-   $is_jalr = $dec_bits ==? 11'bx_000_1100111; //check if the instruction is JALR.
+   $is_lui = $dec_bits ==? 11'bx_xxx_0110111; // Check if the instruction is LUI.
+   $is_auipc = $dec_bits ==? 11'bx_xxx_0010111; // Check if the instruction is AUIPC.
+   $is_jal = $dec_bits ==? 11'bx_xxx_1101111; // Check if the instruction is JAL.
+   $is_jalr = $dec_bits ==? 11'bx_000_1100111; // Check if the instruction is JALR.
    
-   $is_slti = $dec_bits ==? 11'bx_010_0010011; //check if the instruction is SLTI.
+   $is_slti = $dec_bits ==? 11'bx_010_0010011; // Check if the instruction is SLTI.
    
-   $is_sltiu = $dec_bits ==? 11'bx_011_0010011; //check if the instruction is SLTIU.
-   $is_xori = $dec_bits ==? 11'bx_100_0010011; //check if the instruction is XORI.
-   $is_ori = $dec_bits ==? 11'bx_110_0010011; //check if the instruction is ORI.
-   $is_andi = $dec_bits ==? 11'bx_111_0010011; //check if the instruction is ANDI.
-   $is_slli = $dec_bits == 11'b0_001_0010011; //check if the instruction is SLLI.
-   $is_srli = $dec_bits == 11'b0_101_0010011; //check if the instruction is SRLI.
-   $is_srai = $dec_bits == 11'b1_101_0010011; //check if the instruction is SRAI.
-   $is_sub = $dec_bits == 11'b1_000_0110011; //check if the instruction is SUB.
-   $is_sll = $dec_bits == 11'b0_001_0110011; //check if the instruction is SLL.
-   $is_slt = $dec_bits == 11'b0_010_0110011; //check if the instruction is SLT.
-   $is_sltu = $dec_bits == 11'b0_011_0110011; //check if the instruction is SLTU.
-   $is_xor = $dec_bits == 11'b0_100_0110011; //check if the instruction is XOR.
-   $is_srl = $dec_bits == 11'b0_101_0110011; //check if the instruction is SRL.
-   $is_sra = $dec_bits == 11'b1_101_0110011; //check if the instruction is SRA.
-   $is_or = $dec_bits == 11'b0_110_0110011; //check if the instruction is OR.
-   $is_and = $dec_bits == 11'b0_111_0110011; //check if the instruction is AND.
+   $is_sltiu = $dec_bits ==? 11'bx_011_0010011; // Check if the instruction is SLTIU.
+   $is_xori = $dec_bits ==? 11'bx_100_0010011; // Check if the instruction is XORI.
+   $is_ori = $dec_bits ==? 11'bx_110_0010011; // Check if the instruction is ORI.
+   $is_andi = $dec_bits ==? 11'bx_111_0010011; // Check if the instruction is ANDI.
+   $is_slli = $dec_bits == 11'b0_001_0010011; // Check if the instruction is SLLI.
+   $is_srli = $dec_bits == 11'b0_101_0010011; // Check if the instruction is SRLI.
+   $is_srai = $dec_bits == 11'b1_101_0010011; // Check if the instruction is SRAI.
+   $is_sub = $dec_bits == 11'b1_000_0110011; // Check if the instruction is SUB.
+   $is_sll = $dec_bits == 11'b0_001_0110011; // Check if the instruction is SLL.
+   $is_slt = $dec_bits == 11'b0_010_0110011; // Check if the instruction is SLT.
+   $is_sltu = $dec_bits == 11'b0_011_0110011; // Check if the instruction is SLTU.
+   $is_xor = $dec_bits == 11'b0_100_0110011; // Check if the instruction is XOR.
+   $is_srl = $dec_bits == 11'b0_101_0110011; // Check if the instruction is SRL.
+   $is_sra = $dec_bits == 11'b1_101_0110011; // Check if the instruction is SRA.
+   $is_or = $dec_bits == 11'b0_110_0110011; // Check if the instruction is OR.
+   $is_and = $dec_bits == 11'b0_111_0110011; // Check if the instruction is AND.
    
    $is_load = $dec_bits ==? 11'bx_xxx_0000011; //check if the instruction is LOAD or STORE of any kind.
-   
-   //check LOAD 52.
-   
+    
    
    `BOGUS_USE($imm $is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_addi $is_add);
    
    
-   //Register File
-   
-   //m4+rf(32, 32, $reset, $wr_en, $wr_index[4:0], $wr_data[31:0], $rs1_valid, $rs1[4:0], $src1_value, $rs2_valid, $rs2[4:0], $src2_value)
+   //Register File. Changes on line 190.
+
    //I am going to change $rd_en1 to $rs1_valid and $rd_index1[4:0] to $rs1[4:0].
    //The same goes for $rd_en2 to $rs2_valid and $rd_index2[4:0] to $rs2[4:0].
-   //I am going to change $wr_en to $rd_valid and also $wr_index[4:0] to $rd[4:0]. Not needed now actually.
    
    
    //ALU
@@ -143,7 +135,7 @@
     $is_ori ? $src1_value | $imm :
     $is_xori ? $src1_value ^ $imm :
     $is_slli ? $src1_value << $imm[5:0] :
-    $is_srli ? $src1_value >> $imm[5:0] : //problem
+    $is_srli ? $src1_value >> $imm[5:0] : 
     $is_and ? $src1_value & $src2_value :
     $is_or ? $src1_value | $src2_value :
     $is_xor ? $src1_value ^ $src2_value :
@@ -157,22 +149,18 @@
     $is_auipc ? $pc + $imm :
     $is_jal ? $pc + 32'd4 :
     $is_jalr ? $pc + 32'd4 :
-    $is_load ? $src1_value + $imm : //new
-    $is_s_instr ? $src1_value + $imm : //new
+    $is_load ? $src1_value + $imm : // Not specified.
+    $is_s_instr ? $src1_value + $imm : // Not specified.
     $is_sra ? $sra_rslt[31:0] :
     $is_srai ? $srai_rslt[31:0] :
     $is_slt ? (($src1_value[31] == $src2_value[31]) ? $sltu_rslt : {31'b0, $src1_value[31]}) :
     $is_slti ? (($src1_value[31] == $imm[31]) ? $sltu_rslt : {31'b0, $src1_value[31]}) :
-               32'b0; //default
+               32'b0; // Default.
    
-   //Now we have the result that we can plug in into the $wr_data[31:0] of the register file.
-   
-   //Complete the result with all possible operations.
-   
+   //Now we have the result that we can plug into the $wr_data[31:0] of the register file. Line 190.
    
    //Branch Logic
-   
-   //Taken Branch:(($src_value1 >= $src_value2) ^ ($src_value1[31] != $src_value2[31]))
+   //Taken Branch:
    $taken_br = $is_beq ? ($src1_value == $src2_value) :
                $is_bne ? ($src1_value != $src2_value) :
                $is_blt ? (($src1_value < $src2_value) ^ ($src1_value[31] != $src2_value[31])) :
@@ -183,29 +171,25 @@
    
    $br_tgt_pc[31:0] = $pc + $imm;
    
-   //For the JUMP Instructions:
+   // For the JUMP Instructions:
    $jalr_tgt_pc[31:0] = $src1_value + $imm;
    
    
-   //Load Data: Output of DMem
-   
+   // Load Data: Output of DMem.
    $new_result[31:0] = $is_load ? $ld_data[31:0] : $result;
    
-   
+   // Check if simulation is okay.
    $passed_cond = (/xreg[30]$value == 32'b1) && (!$reset && $next_pc[31:0] == $pc[31:0]);
    
    
-   
-   
    // Assert these to end simulation (before Makerchip cycle limit).
-   *passed = >>2$passed_cond; //now we plug in the Testbench.
-   //m4+tb()
+   *passed = >>2$passed_cond;
+
    *failed = *cyc_cnt > M4_MAX_CYC;
    
    m4+rf(32, 32, $reset, ($rd_valid && $rd[4:0] != 5'b0), $rd[4:0], $new_result[31:0], $rs1_valid, $rs1[4:0], $src1_value, $rs2_valid, $rs2[4:0], $src2_value)
    m4+dmem(32, 32, $reset, $result[6:2], $is_s_instr, $src2_value[31:0], $is_load, $ld_data)
-   //m4+rf(32, 32, $reset, $wr_en, $wr_index[4:0], $wr_data[31:0], $rd_en1, $rd_index1[4:0], $rd_data1, $rd_en2, $rd_index2[4:0], $rd_data2)
-   //m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
+   
    m4+cpu_viz()
 \SV
    endmodule
