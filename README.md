@@ -4,7 +4,7 @@ This repository contains my Verilog implementations developed while completing t
 **edX / Linux Foundation course “Building a RISC-V CPU Core”**, taught by **Steve Hoover**. The work in this repository follows the structure of the course and builds up from basic digital design components to a simple RISC-V CPU core. All code here represents my own coursework solutions created while following the instructional material.
 
 This repository is shared as a **learning portfolio** to demonstrate my understanding
-of digital design and hardware description using Verilog.
+of digital design and hardware description using TL-Verilog.
 
 ---
 
