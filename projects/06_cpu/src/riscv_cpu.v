@@ -6,45 +6,15 @@
 
    m4_test_prog()
 
-   //---------------------------------------------------------------------------------
-   // /====================\
-   // | Sum 1 to 9 Program |
-   // \====================/
-   //
-   // Program to test RV32I
-   // Add 1,2,3,...,9 (in that order).
-   //
-   // Regs:
-   //  x12 (a2): 10
-   //  x13 (a3): 1..10
-   //  x14 (a4): Sum
-   //
-   //m4_asm(ADDI, x14, x0, 0)             // Initialize sum register a4 with 0
-   //m4_asm(ADDI, x12, x0, 1010)          // Store count of 10 in register a2.
-   //m4_asm(ADDI, x13, x0, 1)             // Initialize loop count register a3 with 0
-   // Loop:
-   //m4_asm(ADD, x14, x13, x14)           // Incremental summation
-   //m4_asm(ADDI, x13, x13, 1)            // Increment loop count by 1
-   //m4_asm(BLT, x13, x12, 1111111111000) // If a3 is less than a2, branch to label named <loop>
-   // Test result value in x14, and set x31 to reflect pass/fail.
-                   
-   //m4_asm(ADDI, x0, x0, 1)
-   //Test to check if manipulating the value 0 in register 0 leads to a change of the value. It was made unable by setting $rd_value exactly to 0 for this case.
-                   
-   //m4_asm(ADDI, x30, x14, 111111010100) // Subtract expected value of 44 to set x30 to 1 if and only iff the result is 45 (1 + 2 + ... + 9).
-   //m4_asm(BGE, x0, x0, 0) // Done. Jump to itself (infinite loop). (Up to 20-bit signed immediate plus implicit 0 bit (unlike JALR) provides byte address; last immediate bit should also be 0)
-   //m4_asm_end()
-   //m4_define(['M4_MAX_CYC'], 50)
-   //---------------------------------------------------------------------------------
-
-
 \SV
    m4_makerchip_module   // (Expanded in Nav-TLV pane.)
    /* verilator lint_on WIDTH */
 \TLV
    
    $reset = *reset;
-   
+
+
+   // Program Counter
    //$pc[1:0] = 2'b00; //lower 2 bits of the pc variable should be 0.
    $pc[31:0] = >>1$next_pc[31:0];
    //$next_pc[31:0] = $reset ? 0 : {$pc[31:2],2'b00} + 32'd4; //Program counter. Right now a simple counter. Used to fetch instruction from Instruction Memory.
@@ -54,40 +24,30 @@
                     $is_jal ? $br_tgt_pc :
                     $is_jalr ? $jalr_tgt_pc :
                     $pc + 32'd4;
-   
-   /*$next_pc[31:0] = $reset
-                       ? 0 :
-                        $taken_br
-                       ? $br_tgt_pc :
-                        $is_jal
-                       ? $br_tgt_pc :
-                        $is_jalr
-                       ? $jalr_tgt_pc :
-                        {$pc[31:2],2'b00} + 32'd4;*/
-   
-   `READONLY_MEM($pc[31:0],  $$instr[31:0]); //Instruction memory. The program counter says instruction x needs to be fetched.
+
+                   
+   // Instruction memory. The program counter says instruction x needs to be fetched.
+   `READONLY_MEM($pc[31:0],  $$instr[31:0]);
    
    
-   //Decode Logic. Now we need to know what type of instruction did we just fetch? We check the opcodes.
-   
-   $is_u_instr = $instr[6:2] ==? 5'b0x101; //is_u_instr checks if instruction is of type U or not. (1 bit)
-   $is_i_instr = $instr[6:2] == 5'b00000 || $instr[6:2] == 5'b00001 || $instr[6:2] == 5'b00100 || $instr[6:2] == 5'b00110 || $instr[6:2] == 5'b11001; //checks if instruction is of type I.
-   $is_r_instr = $instr[6:2] == 5'b01011 || $instr[6:2] == 5'b01100 || $instr[6:2] == 5'b01110 || $instr[6:2] == 5'b10100; //checks if instruction is of type R.
-   $is_s_instr = $instr[6:2] ==? 5'b0100x; //checks if instruction is of type S.
-   $is_b_instr = $instr[6:2] == 5'b11000; //checks if instruction is of type B.
-   $is_j_instr = $instr[6:2] == 5'b11011; //checks if instruction is of type J.
+   //Decode Logic. Now we need to know what type of instruction we just fetched. We check the opcodes.
+   $is_u_instr = $instr[6:2] ==? 5'b0x101; // Checks if instruction is of type U or not.
+   $is_i_instr = $instr[6:2] == 5'b00000 || $instr[6:2] == 5'b00001 || $instr[6:2] == 5'b00100 || $instr[6:2] == 5'b00110 || $instr[6:2] == 5'b11001; // Checks if instruction is of type I.
+   $is_r_instr = $instr[6:2] == 5'b01011 || $instr[6:2] == 5'b01100 || $instr[6:2] == 5'b01110 || $instr[6:2] == 5'b10100; // Checks if instruction is of type R.
+   $is_s_instr = $instr[6:2] ==? 5'b0100x; // Checks if instruction is of type S.
+   $is_b_instr = $instr[6:2] == 5'b11000; // Checks if instruction is of type B.
+   $is_j_instr = $instr[6:2] == 5'b11011; // Checks if instruction is of type J.
    
    
    //Extracting instruction fields for non-immediate instructions:
-   
    $rs2[4:0] = $instr[24:20];
    $rs1[4:0] = $instr[19:15];
    $funct3[2:0] = $instr[14:12];
    $rd[4:0] = $instr[11:7];
    $opcode[6:0] = $instr[6:0];
+                   
    
    //Determine when the fields are valid:
-   
    $rs2_valid = $is_r_instr || $is_s_instr || $is_b_instr;
    $rs1_valid = $is_r_instr || $is_i_instr || $is_s_instr || $is_b_instr;
    $rd_valid = $is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr; //was like this
@@ -98,11 +58,9 @@
    $imm_valid = $is_i_instr || $is_s_instr || $is_b_instr || $is_u_instr || $is_j_instr;
    
    //Suppresses the warnings on the Log for the following signals:
-   
    `BOGUS_USE($rd $rd_valid $rs1 $rs1_valid $rs2 $rs2_valid $imm_valid $opcode $funct3);
    
-   //Immediate:
-   
+   // Dealing with immediate: 
    $imm[31:0] = $is_i_instr ? {  {21{$instr[31]}},  $instr[30:20]  } :
                 $is_s_instr ? {  {21{$instr[31]}},  $instr[30:25],  $instr[11:7]  } :
                 $is_b_instr ? {  {20{$instr[31]}},  $instr[7],  $instr[30:25],  $instr[11:8],  1'b0  } :
@@ -151,7 +109,7 @@
    $is_or = $dec_bits == 11'b0_110_0110011; //check if the instruction is OR.
    $is_and = $dec_bits == 11'b0_111_0110011; //check if the instruction is AND.
    
-   $is_load = $dec_bits ==? 11'bx_xxx_0000011; //check is the instruction is LOAD or STORE of any kind.
+   $is_load = $dec_bits ==? 11'bx_xxx_0000011; //check if the instruction is LOAD or STORE of any kind.
    
    //check LOAD 52.
    
